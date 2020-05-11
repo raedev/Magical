@@ -18,12 +18,11 @@ package com.zhihu.matisse;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Application;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.widget.ImageView;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -32,6 +31,7 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -40,8 +40,13 @@ import androidx.fragment.app.FragmentTransaction;
 import com.zhihu.matisse.engine.ImageEngine;
 import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.internal.entity.CaptureStrategy;
+import com.zhihu.matisse.internal.entity.Item;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
+import com.zhihu.matisse.internal.model.SelectedItemCollection;
+import com.zhihu.matisse.internal.ui.BasePreviewActivity;
+import com.zhihu.matisse.internal.ui.ImagePreviewActivity;
 import com.zhihu.matisse.internal.ui.MatissePermission;
+import com.zhihu.matisse.internal.ui.SelectedPreviewActivity;
 import com.zhihu.matisse.listener.OnCheckedListener;
 import com.zhihu.matisse.listener.OnSelectedListener;
 import com.zhihu.matisse.ui.MatisseActivity;
@@ -49,6 +54,7 @@ import com.zhihu.matisse.ui.MatisseActivity;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_BEHIND;
@@ -416,4 +422,65 @@ public final class SelectionCreator {
         mSelectionSpec.showPreview = showPreview;
         return this;
     }
+
+    public SelectionCreator setCurrentPosition(int position) {
+        mSelectionSpec.selectedPosition = position;
+        return this;
+    }
+
+
+    /**
+     * 选择的图片跳转到图片预览
+     *
+     * @param items select items
+     * @author rae
+     */
+    public void forPreviewSelected(int requestCode, List<Item> items) {
+        Activity activity = mMatisse.getActivity();
+        if (activity == null) return;
+        Intent intent = new Intent(activity, SelectedPreviewActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList(SelectedItemCollection.STATE_SELECTION, new ArrayList<>(items));
+        bundle.putInt(SelectedItemCollection.STATE_COLLECTION_TYPE, SelectedItemCollection.COLLECTION_UNDEFINED);
+        intent.putExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE, bundle);
+        intent.putExtra(BasePreviewActivity.EXTRA_RESULT_ORIGINAL_ENABLE, true);
+        activity.startActivityForResult(intent, requestCode);
+    }
+
+    /**
+     * 跳转到图片预览
+     *
+     * @author rae
+     */
+    public void toPreview(List<String> urls, @Nullable ImageView view) {
+        List<Item> data = new ArrayList<>();
+        for (String item : urls) {
+            data.add(Item.fromUrl(item));
+        }
+        toPreviewItems(data, view);
+    }
+
+    /**
+     * 跳转到图片预览
+     *
+     * @param items select items
+     * @author rae
+     */
+    public void toPreviewItems(List<Item> items, @Nullable ImageView view) {
+        Activity activity = mMatisse.getActivity();
+        if (activity == null) return;
+        Intent intent = new Intent(activity, ImagePreviewActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList(SelectedItemCollection.STATE_SELECTION, new ArrayList<>(items));
+        bundle.putInt(SelectedItemCollection.STATE_COLLECTION_TYPE, SelectedItemCollection.COLLECTION_UNDEFINED);
+        intent.putExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE, bundle);
+        intent.putExtra("position", mSelectionSpec.selectedPosition);
+        if (view == null) {
+            activity.startActivity(intent);
+            return;
+        }
+        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(activity, view, "preview");
+        ActivityCompat.startActivity(activity, intent, optionsCompat.toBundle());
+    }
+
 }

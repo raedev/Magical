@@ -1,11 +1,11 @@
-package com.zhihu.matisse.sample;
+package com.zhihu.matisse.internal.ui.widget;
 
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
@@ -18,30 +18,6 @@ import it.sephiroth.android.library.imagezoom.ImageViewTouch;
  */
 public class MagicalImageView extends ImageViewTouch {
 
-    private float mRawDownY;
-    private float mRawDownScale = 1.0F;
-    private float mDiffScrollY;
-    private float mMoveRatio; // 移动比例[0,1]
-
-    private final Runnable mMoveRunnable = new Runnable() {
-        @Override
-        public void run() {
-            ValueAnimator valueAnimator = ValueAnimator.ofFloat(mMoveRatio);
-            valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-            valueAnimator.setDuration(300);
-            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    float value = mMoveRatio - (float) animation.getAnimatedValue();
-                    if (mOnDismissListener != null) {
-                        mOnDismissListener.onImageViewSliding(value);
-                    }
-                }
-            });
-            valueAnimator.start();
-        }
-    };
-
     public interface onMagicalImageViewDismissListener {
 
         /**
@@ -52,10 +28,39 @@ public class MagicalImageView extends ImageViewTouch {
         void onImageViewSliding(float ratio);
 
         void onImageViewDismiss();
+
     }
 
-    // 满足最小滑动Y坐标距离关闭图片
-    private final int mMinDismissY = 400;
+    private final Runnable mMoveRunnable = new Runnable() {
+        @Override
+        public void run() {
+            ValueAnimator valueAnimator = ValueAnimator.ofFloat(mMoveRatio);
+            valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+            valueAnimator.setDuration(200);
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    float value = (float) animation.getAnimatedValue();
+                    float diffValue = mMoveRatio - value;
+                    if (mOnDismissListener != null) {
+                        mOnDismissListener.onImageViewSliding(diffValue);
+                    }
+
+                    if (value >= diffValue) {
+                        mMoveRatio = 0;
+                    }
+
+                }
+            });
+            valueAnimator.start();
+        }
+    };
+    private static final String TAG = "RAE";
+    private float mRawDownY;
+    private float mRawDownScale = 1.0F;
+    private float mDiffScrollY;
+    private float mMoveRatio; // 移动比例[0,1]
+    private boolean mIsInProgress;
 
     private onMagicalImageViewDismissListener mOnDismissListener;
 
@@ -72,12 +77,58 @@ public class MagicalImageView extends ImageViewTouch {
     }
 
     @Override
-    protected GestureDetector.OnGestureListener getGestureListener() {
-        return new MagicalImageViewGestureListener();
+    protected void init(Context context, AttributeSet attrs, int defStyle) {
+        super.init(context, attrs, defStyle);
+
     }
 
     public void setOnDismissListener(onMagicalImageViewDismissListener dismissListener) {
         mOnDismissListener = dismissListener;
+    }
+
+    @Override
+    protected float onDoubleTapPost(float scale, float maxZoom) {
+        if (mDoubleTapDirection == 1) {
+            mDoubleTapDirection = -1;
+            return scale + mScaleFactor;
+        } else {
+            mDoubleTapDirection = 1;
+            return 1f;
+        }
+    }
+
+    @Override
+    public boolean canScroll(int direction) {
+        boolean result = super.canScroll(direction);
+        return result && !canMoveDismiss();
+    }
+
+    /**
+     * 是否可以移动关闭
+     */
+    protected boolean canMoveDismiss() {
+        if (getScale() > 1.5) return false;
+        return !mIsInProgress || !mScaleDetector.isInProgress();
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // 移动过程只需要确定一次是有缩放，就认为是处于缩放状态
+        if (event.getAction() == MotionEvent.ACTION_MOVE && !mIsInProgress && event.getPointerCount() > 1) {
+            mIsInProgress = true;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent e) {
+        mMoveRatio = 0;
+        mRawDownY = e.getRawY();
+        mRawDownScale = getScale();
+        removeCallbacks(mMoveRunnable);
+        return super.onDown(e);
     }
 
     @Override
@@ -91,28 +142,43 @@ public class MagicalImageView extends ImageViewTouch {
     }
 
     @Override
-    public boolean onDown(MotionEvent e) {
-        mRawDownY = e.getRawY();
-        mRawDownScale = getScale();
-        return super.onDown(e);
-    }
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        float diffX = e2.getX() - e1.getX();
+        float diffY = e2.getY() - e1.getY();
 
+        if (Math.abs(velocityX) > 800 || Math.abs(velocityY) > 800) {
+            mUserScaled = true;
+            scrollBy(diffX * 2, diffY * 2, 400);
+            invalidate();
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public boolean onUp(MotionEvent e) {
-        super.onUp(e);
-        // 检查是否满足关闭图片要求
+        // 缩放模式下不处理
+        if (mIsInProgress) {
+            mIsInProgress = false;
+            if (mOnDismissListener != null) {
+                mOnDismissListener.onImageViewSliding(0);
+            }
+            return super.onUp(e);
+        }
         float diffY = mRawDownY - e.getRawY();
-        if (diffY < 0 && Math.abs(diffY) > mMinDismissY) {
+        // 检查是否满足关闭图片要求
+        if (canMoveDismiss() && diffY < 0 && Math.abs(diffY) > 460) {
             onDismiss();
+        } else if (getScale() < getMinScale()) {
+            zoomTo(getMinScale(), 300); // 超过最小缩放比例
+            animSourceLocationRatio();// 回调原来的移动比例
         } else {
             // 释放之后图片居中位置
             center(true, true);
             // 回调原来的移动比例
             animSourceLocationRatio();
         }
-
-
+        mIsInProgress = false;
         return true;
     }
 
@@ -120,9 +186,11 @@ public class MagicalImageView extends ImageViewTouch {
      * 动画回调原来比例
      */
     private void animSourceLocationRatio() {
-        Log.i("rae", "最后的比例：" + mMoveRatio);
-        removeCallbacks(mMoveRunnable);
-        post(mMoveRunnable);
+        if (mMoveRatio > 0) {
+            Log.d(TAG, "动画位置：" + mMoveRatio);
+            removeCallbacks(mMoveRunnable);
+            post(mMoveRunnable);
+        }
     }
 
     @Override
@@ -133,7 +201,12 @@ public class MagicalImageView extends ImageViewTouch {
 
     @Override
     public void scrollBy(float dx, float dy) {
+        if (!canMoveDismiss()) {
+            super.scrollBy(dx, dy);
+            return;
+        }
         RectF rect = getBitmapRect();
+        if (rect == null) return;
         mScrollRect.set(dx, dy, 0, 0);
         updateRect(rect, mScrollRect);
         postTranslate(dx, dy);
@@ -157,7 +230,7 @@ public class MagicalImageView extends ImageViewTouch {
     /**
      * 计算移动时候的缩放比例
      */
-    private float calcMoveRatio() {
+    protected float calcMoveRatio() {
         // 比例 =  滑动距离 / 半屏幕高度
         if (mDiffScrollY < 0) {
             // 向上滑动的时候不执行缩放
@@ -185,23 +258,5 @@ public class MagicalImageView extends ImageViewTouch {
         if (mOnDismissListener != null) {
             mOnDismissListener.onImageViewDismiss();
         }
-    }
-
-
-    private class MagicalImageViewGestureListener extends ImageViewTouch.GestureListener {
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            boolean result = super.onFling(e1, e2, velocityX, velocityY);
-            if (mScaleDetector.isInProgress()) return false; // 在缩放的过程不处理
-            float diffY = e2.getY() - e1.getY(); // Y坐标距离
-            // 处理快速滑动返回，满足下面的阻尼即可
-            if (velocityY > 800 && diffY > MagicalImageView.this.mMinDismissY) {
-                MagicalImageView.this.onDismiss();
-            }
-            return result;
-        }
-
-
     }
 }

@@ -15,6 +15,5 @@
         <item name="android:windowContentTransitions">true</item>
         <!--        <item name="android:windowIsFloating">true</item>-->
 
-
     </style>
 </resources>

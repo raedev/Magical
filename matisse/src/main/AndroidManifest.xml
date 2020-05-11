@@ -24,6 +24,8 @@
         <activity android:name="com.zhihu.matisse.ui.MatisseActivity" />
         <activity android:name="com.zhihu.matisse.internal.ui.AlbumPreviewActivity" />
         <activity android:name="com.zhihu.matisse.internal.ui.SelectedPreviewActivity" />
-        <activity android:name="com.zhihu.matisse.internal.ui.ImagePreviewActivity" />
+        <activity
+            android:name="com.zhihu.matisse.internal.ui.ImagePreviewActivity"
+            android:theme="@style/Matisse.Transparent" />
     </application>
 </manifest>

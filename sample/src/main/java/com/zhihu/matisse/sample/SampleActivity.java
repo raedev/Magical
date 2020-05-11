@@ -25,7 +25,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -42,6 +41,8 @@ import com.zhihu.matisse.internal.entity.Item;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.sephiroth.android.library.imagezoom.ImageViewTouch;
+
 public class SampleActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int REQUEST_CODE_CHOOSE = 23;
@@ -56,6 +57,9 @@ public class SampleActivity extends AppCompatActivity implements View.OnClickLis
         findViewById(R.id.dracula).setOnClickListener(this);
         findViewById(R.id.only_gif).setOnClickListener(this);
         findViewById(R.id.button_preview).setOnClickListener(this);
+        ImageViewTouch imageView = findViewById(R.id.image);
+        new GlideEngine().loadImage(this, 0, 0, imageView,
+                Uri.parse("content://media/external/images/media/24260"));
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -138,12 +142,24 @@ public class SampleActivity extends AppCompatActivity implements View.OnClickLis
                         .forResult(REQUEST_CODE_CHOOSE);
                 break;
             case R.id.button_preview: // 预览图片
-                List<Item> items = mAdapter.getItems();
-                if (items == null || items.size() <= 0) {
-                    Toast.makeText(this, "请先选择图片", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Matisse.from(this).previewSelectionItems(REQUEST_CODE_CHOOSE, items);
+//                List<Item> items = mAdapter.getItems();
+//                if (items == null || items.size() <= 0) {
+//                    Toast.makeText(this, "请先选择图片", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                Matisse.from(this).previewSelectionItems(REQUEST_CODE_CHOOSE, items);
+
+                // 预览图片
+                List<String> urls = new ArrayList<>();
+                urls.add("content://media/external/images/media/24260");
+                urls.add("content://media/external/images/media/24261");
+                urls.add("content://media/external/images/media/24259");
+                urls.add("content://media/external/images/media/24258");
+                urls.add("content://media/external/images/media/24257");
+                Matisse.from(this)
+                        .choose(MimeType.ofImage())
+                        .setCurrentPosition(3)
+                        .toPreview(urls, findViewById(R.id.image));
                 break;
             default:
                 break;

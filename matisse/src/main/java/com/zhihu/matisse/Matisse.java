@@ -15,22 +15,17 @@
  */
 package com.zhihu.matisse;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.zhihu.matisse.internal.entity.Item;
 import com.zhihu.matisse.internal.model.SelectedItemCollection;
 import com.zhihu.matisse.internal.ui.BasePreviewActivity;
-import com.zhihu.matisse.internal.ui.SelectedPreviewActivity;
 import com.zhihu.matisse.ui.MatisseActivity;
 
 import java.lang.ref.WeakReference;
@@ -159,24 +154,6 @@ public final class Matisse {
      */
     public SelectionCreator choose(Set<MimeType> mimeTypes, boolean mediaTypeExclusive) {
         return new SelectionCreator(this, mimeTypes, mediaTypeExclusive);
-    }
-
-    /**
-     * 已选择的图片跳转到图片预览
-     *
-     * @param items select items
-     * @author rae
-     */
-    public void previewSelectionItems(int requestCode, List<Item> items) {
-        Activity activity = getActivity();
-        if (activity == null) return;
-        Intent intent = new Intent(activity, SelectedPreviewActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putParcelableArrayList(SelectedItemCollection.STATE_SELECTION, new ArrayList<>(items));
-        bundle.putInt(SelectedItemCollection.STATE_COLLECTION_TYPE, SelectedItemCollection.COLLECTION_UNDEFINED);
-        intent.putExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE, bundle);
-        intent.putExtra(BasePreviewActivity.EXTRA_RESULT_ORIGINAL_ENABLE, true);
-        activity.startActivityForResult(intent, requestCode);
     }
 
     @Nullable

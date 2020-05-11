@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 
+import com.zhihu.matisse.internal.ui.ImagePreviewActivity;
+
 /**
  * Created by rae on 2020/4/28.
  * Copyright (c) https://github.com/raedev All rights reserved.
@@ -32,4 +34,6 @@ public class ImageViewActivity extends AppCompatActivity implements View.OnClick
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(this, view, "pic");
         ActivityCompat.startActivity(this, intent, optionsCompat.toBundle());
     }
+
+
 }
