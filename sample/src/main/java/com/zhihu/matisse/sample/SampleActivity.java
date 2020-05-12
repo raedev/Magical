@@ -25,6 +25,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,8 +42,6 @@ import com.zhihu.matisse.internal.entity.Item;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.sephiroth.android.library.imagezoom.ImageViewTouch;
-
 public class SampleActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int REQUEST_CODE_CHOOSE = 23;
@@ -57,10 +56,7 @@ public class SampleActivity extends AppCompatActivity implements View.OnClickLis
         findViewById(R.id.dracula).setOnClickListener(this);
         findViewById(R.id.only_gif).setOnClickListener(this);
         findViewById(R.id.button_preview).setOnClickListener(this);
-        ImageViewTouch imageView = findViewById(R.id.image);
-        new GlideEngine().loadImage(this, 0, 0, imageView,
-                Uri.parse("content://media/external/images/media/24260"));
-
+        findViewById(R.id.button_preview_image).setOnClickListener(this);
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(mAdapter = new UriAdapter());
@@ -93,7 +89,7 @@ public class SampleActivity extends AppCompatActivity implements View.OnClickLis
                         .capture(true)
                         .captureStrategy(
                                 new CaptureStrategy(true, "com.zhihu.matisse.sample.fileprovider", "test"))
-                        .maxSelectable(9)
+                        .maxSelectable(3)
                         .addFilter(new GifSizeFilter(320, 320, 5 * Filter.K * Filter.K))
                         .gridExpectedSize(
                                 getResources().getDimensionPixelSize(R.dimen.grid_expected_size))
@@ -142,24 +138,15 @@ public class SampleActivity extends AppCompatActivity implements View.OnClickLis
                         .forResult(REQUEST_CODE_CHOOSE);
                 break;
             case R.id.button_preview: // 预览图片
-//                List<Item> items = mAdapter.getItems();
-//                if (items == null || items.size() <= 0) {
-//                    Toast.makeText(this, "请先选择图片", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                Matisse.from(this).previewSelectionItems(REQUEST_CODE_CHOOSE, items);
-
-                // 预览图片
-                List<String> urls = new ArrayList<>();
-                urls.add("content://media/external/images/media/24260");
-                urls.add("content://media/external/images/media/24261");
-                urls.add("content://media/external/images/media/24259");
-                urls.add("content://media/external/images/media/24258");
-                urls.add("content://media/external/images/media/24257");
-                Matisse.from(this)
-                        .choose(MimeType.ofImage())
-                        .setCurrentPosition(3)
-                        .toPreview(urls, findViewById(R.id.image));
+                List<Item> items = mAdapter.getItems();
+                if (items == null || items.size() <= 0) {
+                    Toast.makeText(this, "请先选择图片", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Matisse.from(this).choose(MimeType.ofImage()).forPreviewSelectedResult(REQUEST_CODE_CHOOSE, items);
+                break;
+            case R.id.button_preview_image: // 预览图片
+                startActivity(new Intent(this, PreviewDemoActivity.class));
                 break;
             default:
                 break;
@@ -175,10 +162,14 @@ public class SampleActivity extends AppCompatActivity implements View.OnClickLis
             Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
             ArrayList<Item> items = Matisse.obtainResultItem(data);
             mAdapter.setItems(items);
+            View previewButton = findViewById(R.id.button_preview);
             if (items != null) {
+                previewButton.setVisibility(items.size() > 0 ? View.VISIBLE : View.GONE);
                 for (Item item : items) {
                     Log.i("rae", "item:" + item.uri);
                 }
+            } else {
+                previewButton.setVisibility(View.GONE);
             }
         }
     }

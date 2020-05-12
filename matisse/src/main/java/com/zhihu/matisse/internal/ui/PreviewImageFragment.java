@@ -71,9 +71,21 @@ public class PreviewImageFragment extends Fragment {
                 ActivityCompat.finishAfterTransition(requireActivity());
             }
         });
+        mMagicalImageView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                SelectionSpec spec = SelectionSpec.getInstance();
+                if (spec.hasInited && spec.onLongClickListener != null) {
+                    spec.onLongClickListener.onLongClick(PreviewImageFragment.this, mMagicalImageView, item);
+                    return true;
+                }
+                return false;
+            }
+        });
         if (attachable) {
             attachTransitionName();
         }
+
         this.loadImage();
     }
 

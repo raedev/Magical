@@ -27,10 +27,11 @@ import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import androidx.core.content.res.ResourcesCompat;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.core.content.res.ResourcesCompat;
 
 import com.zhihu.matisse.R;
 
@@ -41,7 +42,7 @@ public class CheckView extends View {
     private static final float SHADOW_WIDTH = 6.0f; // dp
     private static final int SIZE = 48; // dp
     private static final float STROKE_RADIUS = 11.5f; // dp
-    private static final float BG_RADIUS = 11.0f; // dp
+    private static final float BG_RADIUS = 13f; // dp
     private static final int CONTENT_SIZE = 16; // dp
     private boolean mCountable;
     private boolean mChecked;

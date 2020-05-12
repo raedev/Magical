@@ -134,7 +134,8 @@ public class MagicalImageView extends ImageViewTouch {
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         mDiffScrollY = e2.getRawY() - e1.getRawY();
-        if (getScale() == 1f) {
+        // 正常模式下Y轴的移动幅度大于10认为是在做图片移动操作
+        if (getScale() == 1f && Math.abs(mDiffScrollY) > 20) {
             scrollBy(-distanceX, -distanceY);
             return true;
         }

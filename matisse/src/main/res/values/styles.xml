@@ -37,6 +37,7 @@
         <item name="bottomToolbar.bg">@color/zhihu_bottom_toolbar_bg</item>
         <item name="bottomToolbar.preview.textColor">@color/zhihu_bottom_toolbar_preview</item>
         <item name="bottomToolbar.apply.textColor">@color/zhihu_bottom_toolbar_apply</item>
+        <item name="bottomToolbar.apply.background">@drawable/zhihu_bottom_toolbar_apply</item>
         <item name="preview.bottomToolbar.back.textColor">
             @color/zhihu_preview_bottom_toolbar_back_text
         </item>
@@ -45,6 +46,7 @@
         </item>
         <item name="listPopupWindowStyle">@style/Popup.Zhihu</item>
         <item name="capture.textColor">@color/zhihu_capture</item>
+
     </style>
 
     <style name="Toolbar.Zhihu" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
@@ -53,6 +55,12 @@
 
     <style name="Popup.Zhihu" parent="Widget.AppCompat.Light.ListPopupWindow">
         <item name="android:popupBackground">@color/zhihu_album_popup_bg</item>
+        <item name="android:popupAnimationStyle">@style/ZhihuPopupAnimStyle</item>
+    </style>
+
+    <style name="ZhihuPopupAnimStyle" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/zhihu_popup_enter</item>
+        <item name="android:windowExitAnimation">@anim/zhihu_popup_exit</item>
     </style>
 
     //===================================== Theme Dracula ==========================================
@@ -78,6 +86,7 @@
         <item name="bottomToolbar.bg">@color/dracula_bottom_toolbar_bg</item>
         <item name="bottomToolbar.preview.textColor">@color/dracula_bottom_toolbar_preview</item>
         <item name="bottomToolbar.apply.textColor">@color/dracula_bottom_toolbar_apply</item>
+        <item name="bottomToolbar.apply.background">@drawable/dracula_bottom_toolbar_apply</item>
         <item name="preview.bottomToolbar.back.textColor">
             @color/dracula_preview_bottom_toolbar_back_text
         </item>

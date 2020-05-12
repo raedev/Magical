@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="@color/dracula_primary_dark" />
+            <corners android:radius="@dimen/zhihu_button_radius" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@color/dracula_primary" />
+            <corners android:radius="@dimen/zhihu_button_radius" />
+        </shape>
+    </item>
+</selector>

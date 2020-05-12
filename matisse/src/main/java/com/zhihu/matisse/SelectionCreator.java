@@ -41,6 +41,7 @@ import com.zhihu.matisse.engine.ImageEngine;
 import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.internal.entity.CaptureStrategy;
 import com.zhihu.matisse.internal.entity.Item;
+import com.zhihu.matisse.internal.entity.PreviewItem;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
 import com.zhihu.matisse.internal.model.SelectedItemCollection;
 import com.zhihu.matisse.internal.ui.BasePreviewActivity;
@@ -48,6 +49,7 @@ import com.zhihu.matisse.internal.ui.ImagePreviewActivity;
 import com.zhihu.matisse.internal.ui.MatissePermission;
 import com.zhihu.matisse.internal.ui.SelectedPreviewActivity;
 import com.zhihu.matisse.listener.OnCheckedListener;
+import com.zhihu.matisse.listener.OnLongClickListener;
 import com.zhihu.matisse.listener.OnSelectedListener;
 import com.zhihu.matisse.ui.MatisseActivity;
 
@@ -363,6 +365,17 @@ public final class SelectionCreator {
     }
 
     /**
+     * Set listener for callback immediately when user long click image item.
+     *
+     * @param listener {@link OnLongClickListener}
+     * @return {@link SelectionCreator} for fluent API.
+     */
+    public SelectionCreator setOnLongClickListener(@Nullable OnLongClickListener listener) {
+        mSelectionSpec.onLongClickListener = listener;
+        return this;
+    }
+
+    /**
      * Start to select media and wait for result.
      *
      * @param requestCode Identity of the request Activity or Fragment.
@@ -435,9 +448,10 @@ public final class SelectionCreator {
      * @param items select items
      * @author rae
      */
-    public void forPreviewSelected(int requestCode, List<Item> items) {
+    public void forPreviewSelectedResult(int requestCode, List<Item> items) {
         Activity activity = mMatisse.getActivity();
         if (activity == null) return;
+        if (!checkPermissions(requestCode)) return;
         Intent intent = new Intent(activity, SelectedPreviewActivity.class);
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList(SelectedItemCollection.STATE_SELECTION, new ArrayList<>(items));
@@ -457,7 +471,7 @@ public final class SelectionCreator {
         for (String item : urls) {
             data.add(Item.fromUrl(item));
         }
-        toPreviewItems(data, view);
+//        toPreviewItems(data, view);
     }
 
     /**
@@ -466,7 +480,7 @@ public final class SelectionCreator {
      * @param items select items
      * @author rae
      */
-    public void toPreviewItems(List<Item> items, @Nullable ImageView view) {
+    public void toPreviewItems(List<PreviewItem> items, @Nullable ImageView view) {
         Activity activity = mMatisse.getActivity();
         if (activity == null) return;
         Intent intent = new Intent(activity, ImagePreviewActivity.class);

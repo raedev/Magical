@@ -17,13 +17,14 @@ package com.zhihu.matisse.internal.ui.widget;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import androidx.recyclerview.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.zhihu.matisse.R;
 import com.zhihu.matisse.internal.entity.Item;
@@ -34,6 +35,8 @@ public class MediaGrid extends SquareFrameLayout implements View.OnClickListener
     private ImageView mThumbnail;
     private CheckView mCheckView;
     private ImageView mGifTag;
+    private ImageView mMaskView;
+    private ImageView mCheckedImageView;
     private TextView mVideoDuration;
 
     private Item mMedia;
@@ -55,6 +58,8 @@ public class MediaGrid extends SquareFrameLayout implements View.OnClickListener
 
         mThumbnail = (ImageView) findViewById(R.id.media_thumbnail);
         mCheckView = (CheckView) findViewById(R.id.check_view);
+        mMaskView = (ImageView) findViewById(R.id.image_mask_view);
+        mCheckedImageView = (ImageView) findViewById(R.id.image_checked_view);
         mGifTag = (ImageView) findViewById(R.id.gif);
         mVideoDuration = (TextView) findViewById(R.id.video_duration);
 
@@ -99,6 +104,7 @@ public class MediaGrid extends SquareFrameLayout implements View.OnClickListener
 
     public void setCheckEnabled(boolean enabled) {
         mCheckView.setEnabled(enabled);
+        mMaskView.setVisibility(enabled ? View.GONE : View.VISIBLE);
     }
 
     public void setCheckedNum(int checkedNum) {
@@ -107,6 +113,12 @@ public class MediaGrid extends SquareFrameLayout implements View.OnClickListener
 
     public void setChecked(boolean checked) {
         mCheckView.setChecked(checked);
+        mCheckedImageView.setVisibility(checked ? View.VISIBLE : View.GONE);
+    }
+
+    public void setSelected(boolean selected) {
+        super.setSelected(selected);
+        mCheckedImageView.setVisibility(selected ? View.VISIBLE : View.GONE);
     }
 
     private void setImage() {
