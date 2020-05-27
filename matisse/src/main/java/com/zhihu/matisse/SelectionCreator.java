@@ -22,7 +22,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.ImageView;
+import android.view.View;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -33,6 +33,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -41,7 +42,6 @@ import com.zhihu.matisse.engine.ImageEngine;
 import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.internal.entity.CaptureStrategy;
 import com.zhihu.matisse.internal.entity.Item;
-import com.zhihu.matisse.internal.entity.PreviewItem;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
 import com.zhihu.matisse.internal.model.SelectedItemCollection;
 import com.zhihu.matisse.internal.ui.BasePreviewActivity;
@@ -50,6 +50,7 @@ import com.zhihu.matisse.internal.ui.MatissePermission;
 import com.zhihu.matisse.internal.ui.SelectedPreviewActivity;
 import com.zhihu.matisse.listener.OnCheckedListener;
 import com.zhihu.matisse.listener.OnLongClickListener;
+import com.zhihu.matisse.listener.OnPageSelectedListener;
 import com.zhihu.matisse.listener.OnSelectedListener;
 import com.zhihu.matisse.ui.MatisseActivity;
 
@@ -376,6 +377,17 @@ public final class SelectionCreator {
     }
 
     /**
+     * Set listener for callback immediately when user long click image item.
+     *
+     * @param listener {@link OnLongClickListener}
+     * @return {@link SelectionCreator} for fluent API.
+     */
+    public SelectionCreator setOnPageSelectedListener(@Nullable OnPageSelectedListener listener) {
+        mSelectionSpec.onPageSelectedListener = listener;
+        return this;
+    }
+
+    /**
      * Start to select media and wait for result.
      *
      * @param requestCode Identity of the request Activity or Fragment.
@@ -405,7 +417,7 @@ public final class SelectionCreator {
      *
      * @author rae
      */
-    private boolean checkPermissions(final int requestCode) {
+    private boolean checkPermissions(@Nullable MatissePermission.onMatissePermissionCallback callback) {
         Activity activity = mMatisse.getActivity();
         if (!(activity instanceof AppCompatActivity)) return false;
         int cameraGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
@@ -415,14 +427,16 @@ public final class SelectionCreator {
             FragmentManager supportFragmentManager = ((AppCompatActivity) activity).getSupportFragmentManager();
             FragmentTransaction transaction = supportFragmentManager.beginTransaction();
             MatissePermission fragment = new MatissePermission();
-            fragment.setOnMatissePermissionCallback(new MatissePermission.onMatissePermissionCallback() {
-                @Override
-                public void onPermissionGrant() {
-                    forResult(requestCode);
-                    supportFragmentManager.beginTransaction().remove(fragment).commitNow();
-                    supportFragmentManager.executePendingTransactions();
-                }
-            });
+            if (callback != null) {
+                fragment.setOnMatissePermissionCallback(new MatissePermission.onMatissePermissionCallback() {
+                    @Override
+                    public void onPermissionGrant() {
+                        callback.onPermissionGrant();
+                        supportFragmentManager.beginTransaction().remove(fragment).commitNow();
+                        supportFragmentManager.executePendingTransactions();
+                    }
+                });
+            }
             transaction.add(fragment, "MatissePermission");
             transaction.commitAllowingStateLoss();
             supportFragmentManager.executePendingTransactions();
@@ -430,6 +444,11 @@ public final class SelectionCreator {
         }
         return true;
     }
+
+    private boolean checkPermissions(final int requestCode) {
+        return checkPermissions(() -> forResult(requestCode));
+    }
+
 
     public SelectionCreator showPreview(boolean showPreview) {
         mSelectionSpec.showPreview = showPreview;
@@ -466,13 +485,25 @@ public final class SelectionCreator {
      *
      * @author rae
      */
-    public void toPreview(List<String> urls, @Nullable ImageView view) {
-        List<Item> data = new ArrayList<>();
-        for (String item : urls) {
-            data.add(Item.fromUrl(item));
-        }
-//        toPreviewItems(data, view);
+    public void toShow(String url, @Nullable View view) {
+        List<Item> urls = new ArrayList<>();
+        urls.add(Item.fromUrl(url));
+        showWithItems(urls, view);
     }
+
+    /**
+     * 跳转到图片预览
+     *
+     * @author rae
+     */
+    public void toShow(List<String> urls, @Nullable View view) {
+        List<Item> data = new ArrayList<>();
+        for (String url : urls) {
+            data.add(Item.fromUrl(url));
+        }
+        showWithItems(data, view);
+    }
+
 
     /**
      * 跳转到图片预览
@@ -480,21 +511,26 @@ public final class SelectionCreator {
      * @param items select items
      * @author rae
      */
-    public void toPreviewItems(List<PreviewItem> items, @Nullable ImageView view) {
-        Activity activity = mMatisse.getActivity();
-        if (activity == null) return;
-        Intent intent = new Intent(activity, ImagePreviewActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putParcelableArrayList(SelectedItemCollection.STATE_SELECTION, new ArrayList<>(items));
-        bundle.putInt(SelectedItemCollection.STATE_COLLECTION_TYPE, SelectedItemCollection.COLLECTION_UNDEFINED);
-        intent.putExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE, bundle);
-        intent.putExtra("position", mSelectionSpec.selectedPosition);
-        if (view == null) {
-            activity.startActivity(intent);
+    public void showWithItems(List<Item> items, @Nullable View view) {
+        if (!checkPermissions(null)) {
             return;
         }
-        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(activity, view, "preview");
+        Activity activity = mMatisse.getActivity();
+        if (activity == null || items == null || items.size() <= 0) return;
+        Intent intent = new Intent(activity, ImagePreviewActivity.class);
+        intent.putExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE, new ArrayList<>(items));
+        intent.putExtra("position", mSelectionSpec.selectedPosition);
+        ActivityOptionsCompat optionsCompat;
+        if (view == null) {
+            optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(activity);
+        } else {
+            String transitionName = "preview";
+            ViewCompat.setTransitionName(view, transitionName);
+            optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(activity, view, transitionName);
+        }
+
         ActivityCompat.startActivity(activity, intent, optionsCompat.toBundle());
     }
+
 
 }

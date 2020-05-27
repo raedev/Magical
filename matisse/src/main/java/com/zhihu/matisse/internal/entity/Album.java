@@ -75,6 +75,10 @@ public class Album implements Parcelable {
                 cursor.getLong(cursor.getColumnIndex(AlbumLoader.COLUMN_COUNT)));
     }
 
+    public static Album all() {
+        return new Album(ALBUM_ID_ALL, null, ALBUM_NAME_ALL, -1);
+    }
+
     @Override
     public int describeContents() {
         return 0;

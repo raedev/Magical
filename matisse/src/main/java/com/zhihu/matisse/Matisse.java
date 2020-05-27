@@ -156,6 +156,10 @@ public final class Matisse {
         return new SelectionCreator(this, mimeTypes, mediaTypeExclusive);
     }
 
+    public SelectionCreator preview() {
+        return choose(MimeType.ofImage());
+    }
+
     @Nullable
     Activity getActivity() {
         return mContext.get();

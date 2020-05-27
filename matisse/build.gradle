@@ -70,7 +70,7 @@ tasks.withType(Javadoc) {
     options.addStringOption('encoding', 'UTF-8')
 }
 
-task checkstyle(type:Checkstyle) {
+task checkstyle(type: Checkstyle) {
     description 'Runs Checkstyle inspection against matisse sourcesets.'
     group = 'Code Quality'
     configFile rootProject.file('checkstyle.xml')
@@ -78,4 +78,27 @@ task checkstyle(type:Checkstyle) {
     showViolations true
     classpath = files()
     source 'src/main/java'
+}
+
+
+uploadArchives {
+    apply plugin: 'maven'
+    // 读取本地配置文件
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newInputStream())
+    def userName = properties.getProperty('maven.user')
+    def password = properties.getProperty('maven.password')
+    def mavenUrl = properties.getProperty('maven.url')
+
+    repositories.mavenDeployer {
+        repository(url: mavenUrl) {
+            authentication(userName: userName, password: password)
+        }
+        pom.project {
+            groupId 'com.github.raedev'
+            artifactId 'magical'
+            version '0.0.1'
+            packaging 'aar'
+        }
+    }
 }

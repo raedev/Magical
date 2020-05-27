@@ -2,6 +2,11 @@ package com.zhihu.matisse.internal.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 
 /**
  * Created by rae on 2020/5/12.
@@ -9,8 +14,42 @@ import android.os.Parcelable;
  */
 public class PreviewItem implements Parcelable {
 
+    @NonNull
     private Item mItem;
-    private String name = "preview";
+    @NonNull
+    private String mTransitionName = "preview_item";
+    @Nullable
+    private View mTransitionView;
+
+    public PreviewItem(@NonNull Item item) {
+        mItem = item;
+    }
+
+    public PreviewItem(@NonNull Item item, View view) {
+        mItem = item;
+        String transitionName = ViewCompat.getTransitionName(view);
+        if (transitionName != null) {
+            mTransitionName = transitionName;
+        }
+    }
+
+    @NonNull
+    public Item getItem() {
+        return mItem;
+    }
+
+    public void setItem(@NonNull Item item) {
+        mItem = item;
+    }
+
+    @NonNull
+    public String getTransitionName() {
+        return mTransitionName;
+    }
+
+    public void setTransitionName(@NonNull String transitionName) {
+        mTransitionName = transitionName;
+    }
 
     @Override
     public int describeContents() {
@@ -20,43 +59,15 @@ public class PreviewItem implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeParcelable(this.mItem, flags);
-        dest.writeString(this.name);
-    }
-
-    public PreviewItem() {
-    }
-
-    public PreviewItem(Item item) {
-        this.mItem = item;
-    }
-
-    public PreviewItem(Item item, String name) {
-        this.mItem = item;
-        this.name = name;
+        dest.writeString(this.mTransitionName);
     }
 
     protected PreviewItem(Parcel in) {
         this.mItem = in.readParcelable(Item.class.getClassLoader());
-        this.name = in.readString();
+        this.mTransitionName = in.readString();
     }
 
-    public Item getItem() {
-        return mItem;
-    }
-
-    public void setItem(Item item) {
-        mItem = item;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public static final Parcelable.Creator<PreviewItem> CREATOR = new Parcelable.Creator<PreviewItem>() {
+    public static final Creator<PreviewItem> CREATOR = new Creator<PreviewItem>() {
         @Override
         public PreviewItem createFromParcel(Parcel source) {
             return new PreviewItem(source);
@@ -67,4 +78,10 @@ public class PreviewItem implements Parcelable {
             return new PreviewItem[size];
         }
     };
+
+    @Nullable
+    public androidx.core.util.Pair<View, String> toShareElements() {
+        if (mTransitionView == null) return null;
+        return new androidx.core.util.Pair<>(mTransitionView, mTransitionName);
+    }
 }

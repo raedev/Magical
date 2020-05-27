@@ -188,7 +188,7 @@ public class MagicalImageView extends ImageViewTouch {
      */
     private void animSourceLocationRatio() {
         if (mMoveRatio > 0) {
-            Log.d(TAG, "动画位置：" + mMoveRatio);
+//            Log.d(TAG, "动画位置：" + mMoveRatio);
             removeCallbacks(mMoveRunnable);
             post(mMoveRunnable);
         }

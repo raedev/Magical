@@ -2,7 +2,6 @@ package com.zhihu.matisse.internal.ui;
 
 import android.graphics.Color;
 import android.graphics.Point;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
 import com.zhihu.matisse.R;
@@ -22,17 +22,17 @@ import com.zhihu.matisse.internal.utils.PhotoMetadataUtils;
 
 import it.sephiroth.android.library.imagezoom.ImageViewTouchBase;
 
-public class PreviewImageFragment extends Fragment {
+public class ImagePreviewItemFragment extends Fragment {
 
     private static final String ARGS_ITEM = "args_item";
-    private static final String ARGS_ATTACH_TRANSITION_NAME = "ARGS_ATTACH_TRANSITION_NAME";
+    private static final String ARGS_TRANSITION_NAME = "ARGS_ATTACH_TRANSITION_NAME";
     private ViewGroup mContainerLayout;
 
-    public static PreviewImageFragment newInstance(Item item, boolean attachTransitionName) {
-        PreviewImageFragment fragment = new PreviewImageFragment();
+    public static ImagePreviewItemFragment newInstance(Item item, @Nullable String transitionName) {
+        ImagePreviewItemFragment fragment = new ImagePreviewItemFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelable(ARGS_ITEM, item);
-        bundle.putBoolean(ARGS_ATTACH_TRANSITION_NAME, attachTransitionName);
+        bundle.putString(ARGS_TRANSITION_NAME, transitionName);
         fragment.setArguments(bundle);
         return fragment;
     }
@@ -51,12 +51,12 @@ public class PreviewImageFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         if (getArguments() == null) return;
         final Item item = getArguments().getParcelable(ARGS_ITEM);
-        final boolean attachable = getArguments().getBoolean(ARGS_ATTACH_TRANSITION_NAME);
         if (item == null) {
             return;
         }
         mCurrentItem = item;
         mMagicalImageView = view.findViewById(R.id.image_view);
+        ViewCompat.setTransitionName(mMagicalImageView, getArguments().getString(ARGS_TRANSITION_NAME, "preview"));
         mMagicalImageView.setDisplayType(ImageViewTouchBase.DisplayType.FIT_TO_SCREEN);
         mMagicalImageView.setOnDismissListener(new MagicalImageView.onMagicalImageViewDismissListener() {
             @Override
@@ -71,51 +71,32 @@ public class PreviewImageFragment extends Fragment {
                 ActivityCompat.finishAfterTransition(requireActivity());
             }
         });
-        mMagicalImageView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                SelectionSpec spec = SelectionSpec.getInstance();
-                if (spec.hasInited && spec.onLongClickListener != null) {
-                    spec.onLongClickListener.onLongClick(PreviewImageFragment.this, mMagicalImageView, item);
-                    return true;
-                }
-                return false;
+        mMagicalImageView.setOnLongClickListener(v -> {
+            SelectionSpec spec = SelectionSpec.getInstance();
+            if (spec.hasInited && spec.onLongClickListener != null) {
+                spec.onLongClickListener.onLongClick(ImagePreviewItemFragment.this, mMagicalImageView, item);
+                return true;
             }
+            return false;
         });
-        if (attachable) {
-            attachTransitionName();
-        }
 
         this.loadImage();
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        detachTransitionName();
-    }
-
-    void attachTransitionName() {
-        if (mMagicalImageView != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mMagicalImageView.setTransitionName("preview");
-        }
-    }
-
-    void detachTransitionName() {
-        if (mMagicalImageView != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mMagicalImageView.setTransitionName(null);
-        }
+    public MagicalImageView getMagicalImageView() {
+        return mMagicalImageView;
     }
 
     private void loadImage() {
         try {
-            Point size = PhotoMetadataUtils.getBitmapSize(mCurrentItem.getContentUri(), requireActivity());
-            if (mCurrentItem.isGif()) {
+            Item item = mCurrentItem;
+            Point size = PhotoMetadataUtils.getBitmapSize(item.getContentUri(), requireActivity());
+            if (item.isGif()) {
                 SelectionSpec.getInstance().imageEngine.loadGifImage(getContext(), size.x, size.y, mMagicalImageView,
-                        mCurrentItem.getContentUri());
+                        item.getContentUri());
             } else {
                 SelectionSpec.getInstance().imageEngine.loadImage(getContext(), size.x, size.y, mMagicalImageView,
-                        mCurrentItem.getContentUri());
+                        item.getContentUri());
             }
         } catch (Exception e) {
             e.printStackTrace();

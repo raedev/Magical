@@ -1,71 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/wrap_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp">
+    android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/wrap_content"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:background="?colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/Matisse.Zhihu"
+        app:title="PreviewDemo"
+        app:titleTextColor="@android:color/white" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="@dimen/item_margin_horizontal"
+        android:text="Single ImageView"
+        android:textColor="@android:color/black"
+        android:textSize="22sp" />
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="12dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/banner"
+        android:transitionName="imageView" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="@dimen/item_margin_horizontal"
+        android:text="RecyclerView"
+        android:textColor="@android:color/black"
+        android:textSize="22sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp" />
 
 
-        <ImageView
-            android:id="@+id/imageView1"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="72dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/banner"
-            android:transitionName="imageView" />
-
-
-        <ImageView
-            android:id="@+id/imageView2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="72dp"
-            android:src="@drawable/banner"
-            android:transitionName="imageView" />
-
-        <ImageView
-            android:id="@+id/imageView3"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="72dp"
-            android:src="@drawable/banner"
-            android:transitionName="imageView" />
-
-        <ImageView
-            android:id="@+id/imageView4"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="72dp"
-            android:src="@drawable/banner"
-            android:transitionName="imageView" />
-
-        <ImageView
-            android:id="@+id/imageView5"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="72dp"
-            android:src="@drawable/banner"
-            android:transitionName="imageView" />
-
-        <ImageView
-            android:id="@+id/imageView6"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="72dp"
-            android:src="@drawable/banner"
-            android:transitionName="imageView" />
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>

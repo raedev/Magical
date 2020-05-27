@@ -4,12 +4,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.transition.AutoTransition;
 import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.SharedElementCallback;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -18,10 +20,12 @@ import androidx.viewpager.widget.ViewPager;
 import com.zhihu.matisse.R;
 import com.zhihu.matisse.internal.entity.Item;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
-import com.zhihu.matisse.internal.model.SelectedItemCollection;
+import com.zhihu.matisse.internal.ui.widget.MagicalImageView;
 import com.zhihu.matisse.internal.utils.Platform;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 图片预览
@@ -30,17 +34,31 @@ import java.util.ArrayList;
  * Created by rae on 2020/4/26.
  * Copyright (c) https://github.com/raedev All rights reserved.
  */
-public class ImagePreviewActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
+public class ImagePreviewActivity extends AppCompatActivity {
 
-    private int mLastPagePosition;
+    ArrayList<Item> mItems;
     protected SelectionSpec mSpec;
-    protected final SelectedItemCollection mSelectedCollection = new SelectedItemCollection(this);
+    private int mSelectedPosition; // 当前选择的索引
     private ViewPager mViewPager;
-    private int mViewPosition;
+    private boolean mDisableFinish; // 不允许关闭
+
+    private void setupWindowTransition() {
+        Window window = getWindow();
+        window.setGravity(Gravity.FILL);
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // 是否同时执行
+            window.setAllowEnterTransitionOverlap(false);
+            window.setAllowReturnTransitionOverlap(false);
+            window.setEnterTransition(new AutoTransition()
+                    .excludeTarget(android.R.id.statusBarBackground, true));
+        }
+
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        initWindowTransition();
+        setupWindowTransition();
         super.onCreate(savedInstanceState);
         if (!SelectionSpec.getInstance().hasInited) {
             setResult(RESULT_CANCELED);
@@ -58,76 +76,61 @@ public class ImagePreviewActivity extends AppCompatActivity implements ViewPager
         }
 
         if (savedInstanceState == null) {
-            mSelectedCollection.onCreate(getIntent().getBundleExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE));
+            mItems = getIntent().getParcelableArrayListExtra(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE);
         } else {
-            mSelectedCollection.onCreate(savedInstanceState);
+            mItems = savedInstanceState.getParcelableArrayList(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE);
         }
 
-        ArrayList<Item> items = mSelectedCollection.asList();
-        mViewPosition = getIntent().getIntExtra("position", 0);
+
+        mSelectedPosition = getIntent().getIntExtra("position", 0);
         mViewPager = findViewById(R.id.pager);
-        mViewPager.addOnPageChangeListener(this);
-        PreviewFragmentPagerAdapter adapter = new PreviewFragmentPagerAdapter(getSupportFragmentManager(), items);
-        adapter.setCurrentPosition(mViewPosition);
+        PreviewFragmentPagerAdapter adapter = new PreviewFragmentPagerAdapter(getSupportFragmentManager(), mItems);
+
         mViewPager.setAdapter(adapter);
-        if (mViewPosition != 0) {
-            mViewPager.setCurrentItem(mViewPosition);
+        if (mSelectedPosition != 0) {
+            mViewPager.setCurrentItem(mSelectedPosition);
         }
-    }
 
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-    }
-
-    @Override
-    public void onPageSelected(int position) {
-        PreviewImageFragment fragment = findFragment(position);
-        if (fragment != null && position == mViewPosition) {
-            fragment.attachTransitionName();
-        }
-        if (position != mLastPagePosition) {
-            PreviewImageFragment lastFragment = findFragment(mLastPagePosition);
-            if (lastFragment != null && lastFragment.isVisible()) {
-                lastFragment.detachTransitionName();
+        mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                mSpec.selectedPosition = position;
+                if (mSpec.onPageSelectedListener != null) {
+                    mSpec.onPageSelectedListener.onImagePageSelected(position);
+                }
             }
-            mLastPagePosition = position;
-        }
-    }
+        });
 
-    @Override
-    public void onPageScrollStateChanged(int state) {
+        setEnterSharedElementCallback(new SharedElementCallback() {
+            @Override
+            public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
+                super.onMapSharedElements(names, sharedElements);
+                // 重新设置共享元素
+                int currentItem = mViewPager.getCurrentItem();
+                String tagName = "android:switcher:" + mViewPager.getId() + ":" + currentItem;
+                ImagePreviewItemFragment fragment = (ImagePreviewItemFragment) getSupportFragmentManager().findFragmentByTag(tagName);
+                if (fragment == null || currentItem == mSelectedPosition) return;
+                sharedElements.clear();
+                names.clear();
+                String transitionName = "preview";
+                MagicalImageView view = fragment.getMagicalImageView();
+                names.add(transitionName);
+                sharedElements.put(transitionName, view);
+            }
+        });
 
-    }
-
-    private PreviewImageFragment findFragment(int position) {
-        String tagName = "android:switcher:" + mViewPager.getId() + ":" + position;
-        return (PreviewImageFragment) getSupportFragmentManager().findFragmentByTag(tagName);
     }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
-        mSelectedCollection.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(BasePreviewActivity.EXTRA_DEFAULT_BUNDLE, mItems);
         super.onSaveInstanceState(outState);
     }
 
-    private void initWindowTransition() {
-        Window window = getWindow();
-        window.setGravity(Gravity.FILL);
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // 是否同时执行
-            window.setAllowEnterTransitionOverlap(false);
-            window.setAllowReturnTransitionOverlap(false);
-            window.setEnterTransition(new AutoTransition()
-                    .excludeTarget(android.R.id.statusBarBackground, true));
-        }
-    }
-
-    private static final class PreviewFragmentPagerAdapter extends FragmentPagerAdapter {
+    private final class PreviewFragmentPagerAdapter extends FragmentPagerAdapter {
 
         private final ArrayList<Item> mItems;
-        private int mViewPosition;
 
         PreviewFragmentPagerAdapter(@NonNull FragmentManager fm, ArrayList<Item> items) {
             super(fm);
@@ -142,11 +145,11 @@ public class ImagePreviewActivity extends AppCompatActivity implements ViewPager
         @NonNull
         @Override
         public Fragment getItem(int position) {
-            return PreviewImageFragment.newInstance(mItems.get(position), position == mViewPosition);
-        }
-
-        void setCurrentPosition(int viewPosition) {
-            mViewPosition = viewPosition;
+            String transitionName = "preview";
+            if (position != mSelectedPosition) {
+                transitionName += position;
+            }
+            return ImagePreviewItemFragment.newInstance(mItems.get(position), transitionName);
         }
     }
 }

@@ -28,6 +28,7 @@ import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.listener.OnCheckedListener;
 import com.zhihu.matisse.listener.OnLongClickListener;
 import com.zhihu.matisse.listener.OnSelectedListener;
+import com.zhihu.matisse.listener.OnPageSelectedListener;
 
 import java.util.List;
 import java.util.Set;
@@ -58,6 +59,7 @@ public final class SelectionSpec {
     public int originalMaxSize;
     public OnCheckedListener onCheckedListener;
     public OnLongClickListener onLongClickListener;
+    public OnPageSelectedListener onPageSelectedListener;
     public boolean showPreview;
     public int selectedPosition;
 

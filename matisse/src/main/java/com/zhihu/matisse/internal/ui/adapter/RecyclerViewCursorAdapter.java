@@ -17,6 +17,7 @@ package com.zhihu.matisse.internal.ui.adapter;
 
 import android.database.Cursor;
 import android.provider.MediaStore;
+
 import androidx.recyclerview.widget.RecyclerView;
 
 public abstract class RecyclerViewCursorAdapter<VH extends RecyclerView.ViewHolder> extends
@@ -25,10 +26,11 @@ public abstract class RecyclerViewCursorAdapter<VH extends RecyclerView.ViewHold
     private Cursor mCursor;
     private int mRowIDColumn;
 
-    RecyclerViewCursorAdapter(Cursor c) {
+    protected RecyclerViewCursorAdapter(Cursor c) {
         setHasStableIds(true);
         swapCursor(c);
     }
+
 
     protected abstract void onBindViewHolder(VH holder, Cursor cursor);
 
